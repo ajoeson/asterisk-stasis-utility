@@ -1,6 +1,7 @@
 const AriClient = require('ari-client');
 const moment = require('moment');
 const EventEmitter = require('events').EventEmitter;
+const TtsAzure = require('./tts-azure.js');
 
 class StasisAppManager extends EventEmitter {
   constructor(opts) {
@@ -14,6 +15,7 @@ class StasisAppManager extends EventEmitter {
     };
     this.callMetaStore = {};
     this.localStore = {};
+    this.ttsAzure = null;
   }
 
   async connect() {
@@ -26,6 +28,10 @@ class StasisAppManager extends EventEmitter {
         resolve(ari);
       });
     });
+  }
+
+  setTtsAzureKey(opts) {
+    this.ttsAzure = new TtsAzure(opts);
   }
 
   async serve() {
