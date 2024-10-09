@@ -21,6 +21,7 @@ class StasisAppManager extends EventEmitter {
       callDefaultLanguage: opts.callDefaultLanguage || 'zh-HK',
     };
     this.callMetaStore = {};
+    this.channelStore = {};
     this.localStore = {};
     this.ttsAzure = null;
   }
@@ -60,6 +61,7 @@ class StasisAppManager extends EventEmitter {
       };
       this.callMetaStore[channel.id] = callMetaData;
       this.localStore[channel.id] = {};
+      this.channelStore[channel.id] = channel;
       this.setLocalVariable(channel.id, 'language', this.opts.callDefaultLanguage);
       channel.removeAllListeners('ChannelDtmfReceived');
       this.emit('newCall', event, channel, callMetaData);
@@ -68,6 +70,7 @@ class StasisAppManager extends EventEmitter {
         this.opts.logger.info('    > Call is ended.');
         delete this.localStore[chn.id];
         delete this.callMetaStore[chn.id];
+        delete this.channelStore[chn.id];
       });
     });
 
@@ -117,9 +120,34 @@ class StasisAppManager extends EventEmitter {
 
 
   // Call Action Functions
-  async speakText(channelId, { text, mulngtexts, ttsNodeId }) {
-    this.setLocalVariable(channelId, 'currentTtsNodeId', ttsNodeId);
-    const language = this.getLocalVariable(channelId, 'language') || this.opts.callDefaultLanguage;
+  async exitApplication(channelId, { continueDialplan = true }) {
+    if (continueDialplan) {
+      await this.ari.channels.continueInDialplan({ channelId });;
+    } else {
+      const channel = this.channelStore[channelId];
+      channel.hangup();
+    }
+  }
+  async stopPlayback(channelId) {
+    if (this.localStore[channelId].__playbackId) {
+      await this.ari.playbacks.stop({ playbackId: this.localStore[channelId].__playbackId }).catch(ex => {
+        this.opts.logger.error('      > Cannot stop playback.', this.localStore[channelId].__playbackId, ex.message);
+      });
+    }
+  }
+  async speakText(channelId, { languageOverride, text, mulngtexts, ttsNodeId, setNodeId, checkNodeId }) {
+    if (checkNodeId) {
+      const nid = this.getLocalVariable(channelId, 'currentTtsNodeId');
+      if (nid !== ttsNodeId) {
+        this.opts.logger.error('    > tts node id is not sync.', `ttsNodeId=${ttsNodeId}, nid=${nid}`);
+        return false;
+      }
+    }
+    if (setNodeId) {
+      this.setLocalVariable(channelId, 'currentTtsNodeId', ttsNodeId);
+    }
+    await this.stopPlayback(channelId);
+    const language = languageOverride || this.getLocalVariable(channelId, 'language') || this.opts.callDefaultLanguage;
     const textContent = mulngtexts ? (mulngtexts[language] || text) : text;
     const ttsCacheObject = await this.ttsAzure.getTtsFile({ language, ttsNodeId, text: textContent });
     await new Promise((resolve) => {
@@ -134,7 +162,9 @@ class StasisAppManager extends EventEmitter {
             error: err.message
           })
         }
+        this.localStore[channelId].__playbackId = playback.id;
         playback.once('PlaybackFinished', (event, instance) => {
+          this.localStore[channelId].__playbackId = null;
           resolve({
             completed: true
           });
@@ -142,6 +172,47 @@ class StasisAppManager extends EventEmitter {
 
       });
     });
+  }
+
+  enableUserInput(channelId, { type = ['dtmf'], multiDigits = false, multiDigitsMaxInterval = 2000, nextStepEvtName }) {
+    if (type.includes('dtmf')) {
+      const channel = this.channelStore[channelId];
+      channel.removeAllListeners('ChannelDtmfReceived');
+
+      if (multiDigits) {
+        let accumDigits = '';
+        let tmo = null;
+
+        const delegateListener = (evt) => {
+          if (tmo) {
+            clearInterval(tmo);
+          }
+          accumDigits += evt.digit;
+
+          tmo = setTimeout(async () => {
+            channel.removeAllListeners('ChannelDtmfReceived');
+            const data = {
+              type: evt.type,
+              digit: accumDigits,
+              multiDigits: true,
+              multiDigitsMaxInterval: multiDigitsMaxInterval,
+            };
+            this.emit(nextStepEvtName, data, channel, this.callMetaStore[channelId]);
+          }, multiDigitsMaxInterval);
+        };
+
+        channel.on('ChannelDtmfReceived', delegateListener);
+      } else {
+        channel.on('ChannelDtmfReceived', async (evt) => {
+          channel.removeAllListeners('ChannelDtmfReceived');
+          const data = {
+            type: evt.type,
+            digit: evt.digit,
+          };
+          this.emit(nextStepEvtName, data, channel, this.callMetaStore[channelId]);
+        });
+      }
+    }
   }
 }
 

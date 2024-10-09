@@ -47,6 +47,7 @@ class TtsAzure {
       synthesizer.speakSsmlAsync(String(ssml), result => {
         this.opts.logger.info('    > [Azure TTS] Finished TTS Generation');
         synthesizer.close();
+        resolve(true);
       }, error => {
         this.opts.logger.error('    > [Azure TTS] TTS Gen error', error.message);
         reject(error);
