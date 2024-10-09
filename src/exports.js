@@ -1,5 +1,5 @@
 
 
 module.exports = {
-  AAA: 'BBB'
+  StasisAppManager: require('./stasis-app-manager.js'),
 };
