@@ -7,6 +7,7 @@ class TtsAzure {
       logger: opts.logger || { info: console.log, error: console.error, debug: console.log, warn: console.warn },
       region: opts.region || '',
       subscriptionKey: opts.subscriptionKey || '',
+      voiceConfig: opts.voiceConfig || {},
     };
     this.opts.logger.info('    > Tts Azure is initiated.');
   }

@@ -2,6 +2,8 @@ const AriClient = require('ari-client');
 const moment = require('moment');
 const EventEmitter = require('events').EventEmitter;
 const TtsAzure = require('./tts-azure.js');
+const Fastify = require("fastify");
+const fx = require('fs-extra');
 
 class StasisAppManager extends EventEmitter {
   constructor(opts) {
@@ -12,6 +14,7 @@ class StasisAppManager extends EventEmitter {
       ariUsername: opts.ariUsername || 'tester',
       ariPassword: opts.ariPassword || '123456',
       stasisAppName: opts.stasisAppName || 'TestStasisApp',
+      fastifyPort: opts.fastifyPort || 3015,
     };
     this.callMetaStore = {};
     this.localStore = {};
@@ -58,6 +61,15 @@ class StasisAppManager extends EventEmitter {
         delete this.callMetaStore[chn.id];
       });
     });
+
+    // Setup fastify http server
+    fx.ensureDirSync('./tts');
+    this.fastify = Fastify();
+    this.fastify.post('/aststasisutil/tts/:ttsNodeId/:fileId', async (req, res) => {
+      return {};
+    });
+    await this.fastify.listen({ host: '0.0.0.0', port: this.opts.fastifyPort });
+    this.opts.logger.info('    > Fastify web server is serving at port', this.opts.fastifyPort);
   }
 
   setLocalVariable(channelId, key, val) {

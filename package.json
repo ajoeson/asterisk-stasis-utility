@@ -9,6 +9,7 @@
   "dependencies": {
     "ari-client": "^2.2.0",
     "axios": "^1.7.7",
+    "fastify": "^5.0.0",
     "form-data": "^4.0.0",
     "fs-extra": "^11.2.0",
     "log4js": "^6.9.1",
