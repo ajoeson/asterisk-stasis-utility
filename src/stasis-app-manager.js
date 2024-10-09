@@ -49,6 +49,12 @@ class StasisAppManager extends EventEmitter {
     this.opts.logger.info('    > Stasis app', this.opts.stasisAppName, 'is serving.');
     await this.ari.start(this.opts.stasisAppName);
     this.ari.on('StasisStart', (event, channel) => {
+      const appParams = channel.dialplan.app_data;
+      const appParamsSplit = appParams.split(',');
+      const appParamObj = {};
+      for (let a = 1; a < appParamsSplit.length; a += 2) {
+        appParamObj[appParamsSplit[a]] = appParamsSplit[a+1];
+      }
       const callMetaData = {
         asterisk: {
           channelId: channel.id,
@@ -57,6 +63,7 @@ class StasisAppManager extends EventEmitter {
         },
         caller: channel.caller,
         dialplan: channel.dialplan,
+        params: appParamObj,
         calledAt: moment(channel.creationtime).local().format('YYYY-MM-DD HH:mm:ss.SSS'),
       };
       this.callMetaStore[channel.id] = callMetaData;
