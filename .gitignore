@@ -128,3 +128,20 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+# For TTS file cache
+/tts
+tts
+/tts/*
+tts/*
+tts/**/*
+
+# for application used for testing
+app
+app/*
+/app
+
+# log files
+logs
+/logs
+/logs/*
