@@ -184,7 +184,7 @@ class StasisAppManager extends EventEmitter {
       });
     });
   }
-  ivr_enableUserInput(channelId, { type = ['dtmf'], multiDigits = false, multiDigitsMaxInterval = 2000, nextStepEvtName }) {
+  ivr_enableUserInput(channelId, { type = ['dtmf'], multiDigits = false, fixLengthDigitInput = false, digitLength, multiDigitsMaxInterval = 2000, nextStepEvtName }) {
     if (type.includes('dtmf')) {
       const channel = this.channelStore[channelId];
       channel.removeAllListeners('ChannelDtmfReceived');
@@ -211,6 +211,22 @@ class StasisAppManager extends EventEmitter {
           }, multiDigitsMaxInterval);
         };
 
+        channel.on('ChannelDtmfReceived', delegateListener);
+      } else if (fixLengthDigitInput) {
+        let accumDigits = '';
+        const delegateListener = (evt) => {
+          accumDigits += evt.digit;
+          if (accumDigits.length === digitLength) {
+            channel.removeAllListeners('ChannelDtmfReceived');
+            const data = {
+              type: evt.type,
+              digit: accumDigits,
+              fixLengthDigitInput: true,
+              digitLength: digitLength,
+            };
+            this.emit(nextStepEvtName, data, channel, this.callMetaStore[channelId]);
+          }
+        };
         channel.on('ChannelDtmfReceived', delegateListener);
       } else {
         channel.on('ChannelDtmfReceived', async (evt) => {
