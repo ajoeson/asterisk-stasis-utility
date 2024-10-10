@@ -261,7 +261,7 @@ class StasisAppManager extends EventEmitter {
       app: 'SimpleCallCenter_JoesonTest',
       appArgs: ['newCallIgnore', 'true'].join(','),
       callerId: metadata.caller.number,
-      endpoint: 'PJSIP/fung',
+      endpoint: `${agent.technology}/${agent.resource}`,
       variables: {}, timeout: 60,
     });
     agentChannel.on('ChannelDestroyed', async () => {
