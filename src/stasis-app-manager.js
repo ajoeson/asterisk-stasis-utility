@@ -184,6 +184,14 @@ class StasisAppManager extends EventEmitter {
       });
     });
   }
+  ivr_processFollowupDueCompletion(channelId, { nextStepEvtName }) {
+    const channel = this.channelStore[channelId];
+    channel.removeAllListeners('ChannelDtmfReceived');
+    const data = {
+      type: 'followupDueCompletion',
+    };
+    this.emit(nextStepEvtName, data, channel, this.callMetaStore[channelId]);
+  }
   ivr_enableUserInput(channelId, { type = ['dtmf'], multiDigits = false, fixLengthDigitInput = false, digitLength, multiDigitsMaxInterval = 2000, nextStepEvtName }) {
     if (type.includes('dtmf')) {
       const channel = this.channelStore[channelId];
