@@ -53,7 +53,7 @@ class StasisAppManager extends EventEmitter {
       const appParamsSplit = appParams.split(',');
       const appParamObj = {};
       for (let a = 1; a < appParamsSplit.length; a += 2) {
-        appParamObj[appParamsSplit[a]] = appParamsSplit[a+1];
+        appParamObj[appParamsSplit[a]] = appParamsSplit[a + 1];
       }
       const callMetaData = {
         asterisk: {
@@ -75,9 +75,13 @@ class StasisAppManager extends EventEmitter {
 
       channel.on('StasisEnd', (evt, chn) => {
         this.opts.logger.info('    > Call is ended.');
-        delete this.localStore[chn.id];
-        delete this.callMetaStore[chn.id];
-        delete this.channelStore[chn.id];
+        // Delayed Kill
+        setTimeout(() => {
+          this.opts.logger.info('    > Delay delete metadata.');
+          delete this.localStore[chn.id];
+          delete this.callMetaStore[chn.id];
+          delete this.channelStore[chn.id];
+        }, 15000);
       });
     });
 
@@ -126,8 +130,8 @@ class StasisAppManager extends EventEmitter {
 
 
 
-  // Call Action Functions
-  async exitApplication(channelId, { continueDialplan = true }) {
+  // IVR Action Functions
+  async ivr_exitApplication(channelId, { continueDialplan = true }) {
     if (continueDialplan) {
       await this.ari.channels.continueInDialplan({ channelId });;
     } else {
@@ -135,14 +139,14 @@ class StasisAppManager extends EventEmitter {
       channel.hangup();
     }
   }
-  async stopPlayback(channelId) {
+  async ivr_stopPlayback(channelId) {
     if (this.localStore[channelId].__playbackId) {
       await this.ari.playbacks.stop({ playbackId: this.localStore[channelId].__playbackId }).catch(ex => {
         this.opts.logger.error('      > Cannot stop playback.', this.localStore[channelId].__playbackId, ex.message);
       });
     }
   }
-  async speakText(channelId, { languageOverride, text, mulngtexts, ttsNodeId, setNodeId, checkNodeId }) {
+  async ivr_speakText(channelId, { languageOverride, text, mulngtexts, ttsNodeId, setNodeId, checkNodeId }) {
     if (checkNodeId) {
       const nid = this.getLocalVariable(channelId, 'currentTtsNodeId');
       if (nid !== ttsNodeId) {
@@ -153,7 +157,7 @@ class StasisAppManager extends EventEmitter {
     if (setNodeId) {
       this.setLocalVariable(channelId, 'currentTtsNodeId', ttsNodeId);
     }
-    await this.stopPlayback(channelId);
+    await this.ivr_stopPlayback(channelId);
     const language = languageOverride || this.getLocalVariable(channelId, 'language') || this.opts.callDefaultLanguage;
     const textContent = mulngtexts ? (mulngtexts[language] || text) : text;
     const ttsCacheObject = await this.ttsAzure.getTtsFile({ language, ttsNodeId, text: textContent });
@@ -180,8 +184,7 @@ class StasisAppManager extends EventEmitter {
       });
     });
   }
-
-  enableUserInput(channelId, { type = ['dtmf'], multiDigits = false, multiDigitsMaxInterval = 2000, nextStepEvtName }) {
+  ivr_enableUserInput(channelId, { type = ['dtmf'], multiDigits = false, multiDigitsMaxInterval = 2000, nextStepEvtName }) {
     if (type.includes('dtmf')) {
       const channel = this.channelStore[channelId];
       channel.removeAllListeners('ChannelDtmfReceived');
@@ -220,6 +223,71 @@ class StasisAppManager extends EventEmitter {
         });
       }
     }
+  }
+
+
+
+
+
+
+
+
+
+  // Call Action -> Dial Out Feature Funcrtions
+  async call_createBridgeForCaller(channelId) {
+    const channel = this.channelStore[channelId];
+    if (!channel) {
+      this.opts.logger.error('        > call_createBridgeForCaller The channel is not found.');
+      return false;
+    }
+    const bridgeId = this.getLocalVariable(channelId, 'callerBridgeId');
+    if (bridgeId) {
+      this.opts.logger.error('        > call_createBridgeForCaller The channel is in bridge already.');
+      return false;
+    }
+    const callBridge = await this.ari.bridges.create();
+    this.setLocalVariable(channelId, 'callerBridgeId', callBridge.id);
+    await this.ari.bridges.addChannel({ bridgeId: callBridge.id, channel: channel.id });
+    await this.ari.bridges.startMoh({ bridgeId: callBridge.id });
+  }
+  async call_connectCallerToAgent(channelId, { agent, metadata, onReassign }) {
+    const channel = this.channelStore[channelId];
+    if (!channel) {
+      this.opts.logger.error('        > call_connectCallerToAgent The channel is not found.');
+      return false;
+    }
+    const bridgeId = this.getLocalVariable(channelId, 'callerBridgeId');
+    const agentChannel = await this.ari.channels.originate({
+      app: 'SimpleCallCenter_JoesonTest',
+      appArgs: ['newCallIgnore', 'true'].join(','),
+      callerId: metadata.caller.number,
+      endpoint: 'PJSIP/fung',
+      variables: {}, timeout: 60,
+    });
+    agentChannel.on('ChannelDestroyed', async () => {
+      if (onReassign) {
+        onReassign(channelId);
+      }
+      agentChannel.hangup().catch(ex => {
+        this.opts.logger.debug('      # Failed to hangup call.', ex.message);
+      });
+    });
+    agentChannel.on('StasisStart', async () => {
+      agentChannel.removeAllListeners('ChannelDestroyed');
+      await this.ari.bridges.stopMoh({ bridgeId: bridgeId });
+      this.setLocalVariable(channelId, 'connectedAgentChannelId', agentChannel.id);
+      this.ari.bridges.addChannel({ bridgeId: bridgeId, channel: agentChannel.id });
+    });
+
+    // Auto Set hangup customer if agent hangup
+    agentChannel.on('StasisEnd', async () => {
+      await this.call_hangupChannel(channelId);
+    });
+  }
+  async call_hangupChannel(channelId) {
+    await this.ari.channels.hangup({ channelId }).catch(ex => {
+      this.opts.logger.debug('      # Failed to hangup call.', ex.message);
+    });
   }
 }
 
