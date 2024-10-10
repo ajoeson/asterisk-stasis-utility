@@ -11,7 +11,7 @@ class TtsAzure {
       subscriptionKey: opts.subscriptionKey || '',
       voiceConfig: opts.voiceConfig || {},
     };
-    this.opts.logger.info('    > Tts Azure is initiated.');
+    this.opts.logger.info('    > Tts Azure is initialized.');
   }
 
   async getTtsFile({ language, ttsNodeId, text }) {
