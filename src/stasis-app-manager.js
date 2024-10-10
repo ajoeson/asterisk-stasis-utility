@@ -248,6 +248,29 @@ class StasisAppManager extends EventEmitter {
       }
     }
   }
+  ivr_countdown(channelId, { timeout = 15000, ttsNodeId, onTimeout }) {
+    const channel = this.channelStore[channelId];
+    if (ttsNodeId) {
+      const nid = this.getLocalVariable(channelId, 'currentTtsNodeId');
+      if (nid !== ttsNodeId) {
+        this.opts.logger.error('    > Check node completed. No countdown is required.', `ttsNodeId=${ttsNodeId}, nid=${nid}`);
+        return false;
+      }
+    }
+    const timeoutInt = setTimeout(() => {
+      channel.removeListener('ChannelDtmfReceived', delegateListener);
+      if (onTimeout) {
+        onTimeout();
+      } else {
+        this.opts.logger.error('    > Timeout triggered but function not found.');
+      }
+    }, timeout);
+    const delegateListener = (evt) => {
+      channel.removeListener('ChannelDtmfReceived', delegateListener);
+      clearTimeout(timeoutInt);
+    };
+    channel.on('ChannelDtmfReceived', delegateListener);
+  }
 
 
 
