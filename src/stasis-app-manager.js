@@ -271,6 +271,40 @@ class StasisAppManager extends EventEmitter {
     };
     channel.on('ChannelDtmfReceived', delegateListener);
   }
+  async ivr_recordVoicemail(channelId, { beep = true, timeout = 30, endSignal }) {
+    const voicemailFilename = `voicemail-${channelId}-${Date.now()}`;
+    let liveRecording = await this.ari.channels.record({
+      channelId: channelId,
+      format: "wav",
+      beep: beep,
+      name: voicemailFilename,
+      maxDurationSeconds: timeout,
+      maxSilenceSeconds: timeout,
+      terminateOn: endSignal,
+    });
+    return await new Promise((res) => {
+      liveRecording.once("RecordingFinished", async (e, recording) => {
+        this.opts.logger.info("     > [Voicemail] Timeout or silence detected.", voicemailFilename);
+        res({
+          result: true,
+          voicemailFilename: voicemailFilename,
+          channelId: channelId,
+        });
+      });
+      liveRecording.once("RecordingFailed", (err) => {
+        this.opts.logger.error("     > [IVRASR] Recording Failed", voicemailFilename, err.message);
+        res({
+          result: false,
+          voicemailFilename: voicemailFilename,
+          channelId: channelId,
+        });
+      });
+      liveRecording.once("RecordingStarted", (e, recording) => {
+        this.opts.logger.info("      > IVRASR] Can record now", voicemailFilename);
+      });
+    });
+  }
+
 
 
 
