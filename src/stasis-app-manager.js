@@ -364,6 +364,8 @@ class StasisAppManager extends EventEmitter {
     agentChannel.on('StasisEnd', async () => {
       await this.call_hangupChannel(channelId);
     });
+
+    return agentChannel;
   }
   async call_hangupChannel(channelId) {
     await this.ari.channels.hangup({ channelId }).catch(ex => {
