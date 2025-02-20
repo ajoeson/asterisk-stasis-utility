@@ -19,6 +19,7 @@ class StasisAppManager extends EventEmitter {
       fastifyPublicDomain: opts.fastifyPublicDomain || 'http://127.0.0.1',
       fastifyPort: opts.fastifyPort || 3015,
       callDefaultLanguage: opts.callDefaultLanguage || 'zh-HK',
+      agentDialTimeout: opts.agentDialTimeout || 20,
     };
     this.callMetaStore = {};
     this.channelStore = {};
@@ -349,7 +350,7 @@ class StasisAppManager extends EventEmitter {
       appArgs: ['newCallIgnore', 'true', 'callerType', 'Agent'].join(','),
       callerId: metadata.caller.number,
       endpoint: `${agent.technology}/${agent.resource}`,
-      variables: {}, timeout: 600,
+      variables: {}, timeout: this.opts.agentDialTimeout || 20,
     });
     agentChannel.on('ChannelDestroyed', async () => {
       if (onReassign) {
