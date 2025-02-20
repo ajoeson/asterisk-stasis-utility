@@ -331,6 +331,12 @@ class StasisAppManager extends EventEmitter {
     await this.ari.bridges.addChannel({ bridgeId: callBridge.id, channel: channel.id });
     await this.ari.bridges.startMoh({ bridgeId: callBridge.id });
   }
+  async call_startMohOnBridge(bridgeId) {
+    await this.ari.bridges.startMoh({ bridgeId: bridgeId }).catch(ex => this.opts.logger.error('        > call_startMohOnBridge Failed', ex.message));
+  }
+  async call_stopMohOnBridge(bridgeId) {
+    await this.ari.bridges.stopMoh({ bridgeId: bridgeId }).catch(ex => this.opts.logger.error('        > call_stopMohOnBridge Failed', ex.message));
+  }
   async call_connectCallerToAgent(channelId, { agent, metadata, onReassign }) {
     const channel = this.channelStore[channelId];
     if (!channel) {
