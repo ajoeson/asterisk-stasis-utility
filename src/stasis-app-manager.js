@@ -340,7 +340,7 @@ class StasisAppManager extends EventEmitter {
     const bridgeId = this.getLocalVariable(channelId, 'callerBridgeId');
     const agentChannel = await this.ari.channels.originate({
       app: this.opts.stasisAppName,
-      appArgs: ['newCallIgnore', 'true'].join(','),
+      appArgs: ['newCallIgnore', 'true', 'callerType', 'Agent'].join(','),
       callerId: metadata.caller.number,
       endpoint: `${agent.technology}/${agent.resource}`,
       variables: {}, timeout: 600,
