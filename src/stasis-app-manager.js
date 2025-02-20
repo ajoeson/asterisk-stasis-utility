@@ -326,7 +326,7 @@ class StasisAppManager extends EventEmitter {
       this.opts.logger.error('        > call_createBridgeForCaller The channel is in bridge already.');
       return false;
     }
-    const callBridge = await this.ari.bridges.create();
+    const callBridge = await this.ari.bridges.create({ type: 'mixing,dtmf_events' });
     this.setLocalVariable(channelId, 'callerBridgeId', callBridge.id);
     await this.ari.bridges.addChannel({ bridgeId: callBridge.id, channel: channel.id });
     await this.ari.bridges.startMoh({ bridgeId: callBridge.id });
