@@ -21,9 +21,15 @@ class AcdManager {
     return agents;
   }
 
-  async pickOneAgent() {
+  async pickOneAgent(agentExtList) {
     const agents = await this.opts.stasisAppManager.ari.endpoints.listByTech({ tech: 'PJSIP' });
-    const availableAgents = agents.filter((a) => !a.resource.includes('trunk') && a.state === 'online' && a.channel_ids.length === 0);
+    const availableAgents = agents.filter((a) => {
+      if (!agentExtList) {
+        return !a.resource.includes('trunk') && a.state === 'online' && a.channel_ids.length === 0;
+      } else {
+        return !a.resource.includes('trunk') && agentExtList.includes(a.resource) && a.state === 'online' && a.channel_ids.length === 0;
+      }
+    });
     const randomNo = Math.floor(Math.random() * availableAgents.length - 0.01);
     return availableAgents[randomNo];
   }
