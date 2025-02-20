@@ -339,11 +339,11 @@ class StasisAppManager extends EventEmitter {
     }
     const bridgeId = this.getLocalVariable(channelId, 'callerBridgeId');
     const agentChannel = await this.ari.channels.originate({
-      app: 'SimpleCallCenter_JoesonTest',
+      app: this.opts.stasisAppName,
       appArgs: ['newCallIgnore', 'true'].join(','),
       callerId: metadata.caller.number,
       endpoint: `${agent.technology}/${agent.resource}`,
-      variables: {}, timeout: 60,
+      variables: {}, timeout: 600,
     });
     agentChannel.on('ChannelDestroyed', async () => {
       if (onReassign) {
