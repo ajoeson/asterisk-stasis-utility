@@ -168,7 +168,7 @@ class StasisAppManager extends EventEmitter {
         url = `sound:${ttsCacheObject.filePath}`;
       }
       this.ari.channels.play({
-        media: `sound:${this.opts.fastifyPublicDomain}${ttsCacheObject.path}`,
+        media: url,
         channelId: channelId,
       }, async (err, playback) => {
         if (err) {
