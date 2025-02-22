@@ -28,6 +28,7 @@ class TtsAzure {
         path: `/aststasisutil/tts/${ttsNodeId}/${textHash}.wav`,
         filename: textHash + '.wav',
         filePath: path.join(process.cwd(), 'tts', ttsNodeId, textHash + '.wav'),
+        filePathWoExt: path.join(process.cwd(), 'tts', ttsNodeId, textHash),
       };
     }
 
@@ -58,6 +59,7 @@ class TtsAzure {
       path: `/aststasisutil/tts/${ttsNodeId}/${textHash}.wav`,
       filename: textHash + '.wav',
       filePath: path.join(process.cwd(), 'tts', ttsNodeId, textHash + '.wav'),
+      filePathWoExt: path.join(process.cwd(), 'tts', ttsNodeId, textHash),
     };
   }
 }
