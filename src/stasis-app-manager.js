@@ -147,7 +147,7 @@ class StasisAppManager extends EventEmitter {
       });
     }
   }
-  async ivr_speakText(channelId, { languageOverride, text, mulngtexts, ttsNodeId, setNodeId, checkNodeId }) {
+  async ivr_speakText(channelId, { languageOverride, text, mulngtexts, ttsNodeId, setNodeId, checkNodeId, isLocal = false }) {
     if (checkNodeId) {
       const nid = this.getLocalVariable(channelId, 'currentTtsNodeId');
       if (nid !== ttsNodeId) {
@@ -163,6 +163,10 @@ class StasisAppManager extends EventEmitter {
     const textContent = mulngtexts ? (mulngtexts[language] || text) : text;
     const ttsCacheObject = await this.ttsAzure.getTtsFile({ language, ttsNodeId, text: textContent });
     await new Promise((resolve) => {
+      let url = `sound:${this.opts.fastifyPublicDomain}${ttsCacheObject.path}`;
+      if (isLocal) {
+        url = `sound:${ttsCacheObject.filePath}`;
+      }
       this.ari.channels.play({
         media: `sound:${this.opts.fastifyPublicDomain}${ttsCacheObject.path}`,
         channelId: channelId,
