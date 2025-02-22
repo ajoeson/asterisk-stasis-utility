@@ -165,7 +165,7 @@ class StasisAppManager extends EventEmitter {
     await new Promise((resolve) => {
       let url = `sound:${this.opts.fastifyPublicDomain}${ttsCacheObject.path}`;
       if (isLocal) {
-        url = `sound:${ttsCacheObject.filePath}`;
+        url = `sound:${ttsCacheObject.filePathWoExt}`;
       }
       this.ari.channels.play({
         media: url,
