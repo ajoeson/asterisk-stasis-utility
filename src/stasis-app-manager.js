@@ -158,40 +158,44 @@ class StasisAppManager extends EventEmitter {
     if (setNodeId) {
       this.setLocalVariable(channelId, 'currentTtsNodeId', ttsNodeId);
     }
-    await this.ivr_stopPlayback(channelId);
-    const language = languageOverride || this.getLocalVariable(channelId, 'language') || this.opts.callDefaultLanguage;
-    const textContent = mulngtexts ? (mulngtexts[language] || text) : text;
-    const ttsCacheObject = await this.ttsAzure.getTtsFile({ language, ttsNodeId, text: textContent });
-    await new Promise((resolve) => {
-      let url = `sound:${this.opts.fastifyPublicDomain}${ttsCacheObject.path}`;
-      if (isLocal) {
-        url = `sound:${ttsCacheObject.filePathWoExt}`;
-      }
-      try {
-        this.ari.channels.play({
-          media: url,
-          channelId: channelId,
-        }, async (err, playback) => {
-          if (err) {
-            this.opts.logger.error('    > Error on Asterisk Playback', err.message);
-            return resolve({
-              completed: false,
-              error: err.message
-            })
-          }
-          this.localStore[channelId].__playbackId = playback.id;
-          playback.once('PlaybackFinished', (event, instance) => {
-            this.localStore[channelId].__playbackId = null;
-            resolve({
-              completed: true
+    try {
+      await this.ivr_stopPlayback(channelId);
+      const language = languageOverride || this.getLocalVariable(channelId, 'language') || this.opts.callDefaultLanguage;
+      const textContent = mulngtexts ? (mulngtexts[language] || text) : text;
+      const ttsCacheObject = await this.ttsAzure.getTtsFile({ language, ttsNodeId, text: textContent });
+      await new Promise((resolve) => {
+        let url = `sound:${this.opts.fastifyPublicDomain}${ttsCacheObject.path}`;
+        if (isLocal) {
+          url = `sound:${ttsCacheObject.filePathWoExt}`;
+        }
+        try {
+          this.ari.channels.play({
+            media: url,
+            channelId: channelId,
+          }, async (err, playback) => {
+            if (err) {
+              this.opts.logger.error('    > Error on Asterisk Playback', err.message);
+              return resolve({
+                completed: false,
+                error: err.message
+              })
+            }
+            this.localStore[channelId].__playbackId = playback.id;
+            playback.once('PlaybackFinished', (event, instance) => {
+              this.localStore[channelId].__playbackId = null;
+              resolve({
+                completed: true
+              });
             });
+    
           });
-  
-        });
-      } catch (playError) {
-        console.error('! -> Play Error', playError.message);
-      }
-    });
+        } catch (playError) {
+          console.error('! -> Play Error', playError.message);
+        }
+      });
+    } catch (ivrSpeakError) {
+      console.error('! -> ivrSpeakError', ivrSpeakError.message);
+    }
   }
   ivr_processFollowupDueCompletion(channelId, { nextStepEvtName }) {
     const channel = this.channelStore[channelId];
