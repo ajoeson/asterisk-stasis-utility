@@ -167,26 +167,30 @@ class StasisAppManager extends EventEmitter {
       if (isLocal) {
         url = `sound:${ttsCacheObject.filePathWoExt}`;
       }
-      this.ari.channels.play({
-        media: url,
-        channelId: channelId,
-      }, async (err, playback) => {
-        if (err) {
-          this.opts.logger.error('    > Error on Asterisk Playback', err.message);
-          return resolve({
-            completed: false,
-            error: err.message
-          })
-        }
-        this.localStore[channelId].__playbackId = playback.id;
-        playback.once('PlaybackFinished', (event, instance) => {
-          this.localStore[channelId].__playbackId = null;
-          resolve({
-            completed: true
+      try {
+        this.ari.channels.play({
+          media: url,
+          channelId: channelId,
+        }, async (err, playback) => {
+          if (err) {
+            this.opts.logger.error('    > Error on Asterisk Playback', err.message);
+            return resolve({
+              completed: false,
+              error: err.message
+            })
+          }
+          this.localStore[channelId].__playbackId = playback.id;
+          playback.once('PlaybackFinished', (event, instance) => {
+            this.localStore[channelId].__playbackId = null;
+            resolve({
+              completed: true
+            });
           });
+  
         });
-
-      });
+      } catch (playError) {
+        console.error('! -> Play Error', playError.message);
+      }
     });
   }
   ivr_processFollowupDueCompletion(channelId, { nextStepEvtName }) {
