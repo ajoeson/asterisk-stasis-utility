@@ -22,12 +22,12 @@ class TtsMinimax {
     const textHash = sha256(text);
     const cacheFolder = path.join(process.cwd(), 'tts', ttsNodeId);
     fx.ensureDirSync(cacheFolder);
-    const cacheFilepath = path.join(process.cwd(), 'tts', ttsNodeId, textHash + '.mp3');
+    const cacheFilepath = path.join(process.cwd(), 'tts', ttsNodeId, textHash + '.' + this.opts.voiceConfig[language].format || "mp3");
     if (fx.existsSync(cacheFilepath)) {
       return {
-        path: `/aststasisutil/tts/${ttsNodeId}/${textHash}.mp3`,
+        path: `/aststasisutil/tts/${ttsNodeId}/${textHash}.${this.opts.voiceConfig[language].format || "mp3"}`,
         filename: textHash + '.wav',
-        filePath: path.join(process.cwd(), 'tts', ttsNodeId, textHash + '.mp3'),
+        filePath: path.join(process.cwd(), 'tts', ttsNodeId, textHash + '.' + this.opts.voiceConfig[language].format || "mp3"),
         filePathWoExt: path.join(process.cwd(), 'tts', ttsNodeId, textHash),
       };
     }
@@ -60,9 +60,9 @@ class TtsMinimax {
     fx.writeFileSync(cacheFilepath, Buffer.from(audio, 'hex'));
 
     return {
-      path: `/aststasisutil/tts/${ttsNodeId}/${textHash}.mp3`,
+      path: `/aststasisutil/tts/${ttsNodeId}/${textHash}.${this.opts.voiceConfig[language].format || "mp3"}`,
       filename: textHash + '.mp3',
-      filePath: path.join(process.cwd(), 'tts', ttsNodeId, textHash + '.mp3'),
+      filePath: path.join(process.cwd(), 'tts', ttsNodeId, textHash + '.' + this.opts.voiceConfig[language].format || "mp3"),
       filePathWoExt: path.join(process.cwd(), 'tts', ttsNodeId, textHash),
     };
   }
