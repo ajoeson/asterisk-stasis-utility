@@ -2,6 +2,7 @@ const AriClient = require('ari-client');
 const moment = require('moment');
 const EventEmitter = require('events').EventEmitter;
 const TtsAzure = require('./tts-azure.js');
+const TtsMinimax = require('./tts-minimax.js');
 const Fastify = require("fastify");
 const fx = require('fs-extra');
 const fs = require('fs');
@@ -24,7 +25,9 @@ class StasisAppManager extends EventEmitter {
     this.callMetaStore = {};
     this.channelStore = {};
     this.localStore = {};
+    this.ttsEngine = null;
     this.ttsAzure = null;
+    this.ttsMinimax = null;
   }
 
 
@@ -44,6 +47,12 @@ class StasisAppManager extends EventEmitter {
 
   setTtsAzureKey(opts) {
     this.ttsAzure = new TtsAzure(opts);
+    this.ttsEngine = 'Azure';
+  }
+
+  setTtsMinimaxKey(opts) {
+    this.ttsMinimax = new TtsMinimax(opts);
+    this.ttsEngine = 'Minimax';
   }
 
   async serve() {
@@ -162,7 +171,9 @@ class StasisAppManager extends EventEmitter {
       await this.ivr_stopPlayback(channelId);
       const language = languageOverride || this.getLocalVariable(channelId, 'language') || this.opts.callDefaultLanguage;
       const textContent = mulngtexts ? (mulngtexts[language] || text) : text;
-      const ttsCacheObject = await this.ttsAzure.getTtsFile({ language, ttsNodeId, text: textContent });
+      const ttsCacheObject = this.ttsEngine === 'Azure' ?
+       await this.ttsAzure.getTtsFile({ language, ttsNodeId, text: textContent }) : 
+       await this.ttsMinimax.getTtsFile({ language, ttsNodeId, text: textContent });
       await new Promise((resolve) => {
         let url = `sound:${this.opts.fastifyPublicDomain}${ttsCacheObject.path}`;
         if (isLocal) {
