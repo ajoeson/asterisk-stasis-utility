@@ -46,9 +46,9 @@ class TtsMinimax {
           "pitch": this.opts.voiceConfig[language].pitch || 0
       },
       "audio_setting":{
-          "sample_rate": 8000,
-          "bitrate": 32000,
-          "format": "mp3",
+          "sample_rate": this.opts.voiceConfig[language].sampleRate || 8000,
+          "bitrate": this.opts.voiceConfig[language].bitrate || 128000,
+          "format": this.opts.voiceConfig[language].format || "mp3",
           "channel": 1
       }
     }, {
