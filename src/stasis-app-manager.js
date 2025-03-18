@@ -55,7 +55,7 @@ class StasisAppManager extends EventEmitter {
     this.ttsEngine = 'Minimax';
   }
 
-  async serve() {
+  async serve({ fastifySetupHook }) {
     this.opts.logger.info('    > Stasis app', this.opts.stasisAppName, 'is serving.');
     await this.ari.start(this.opts.stasisAppName);
     this.ari.on('StasisStart', (event, channel) => {
@@ -98,6 +98,9 @@ class StasisAppManager extends EventEmitter {
     // Setup fastify http server
     fx.ensureDirSync('./tts');
     this.fastify = Fastify();
+    if (fastifySetupHook) {
+      await fastifySetupHook(this.fastify);
+    }
     this.fastify.get('/aststasisutil/tts/:ttsNodeId/:fileId', (req, res) => {
       const { ttsNodeId, fileId } = req.params;
       this.opts.logger.debug('   > Requested tts file', ttsNodeId, '/', fileId);
