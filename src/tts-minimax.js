@@ -42,7 +42,7 @@ class TtsMinimax {
       "voice_setting":{
           "voice_id": this.opts.voiceConfig[language].voice || "Deep_Voice_Man",
           "speed": this.opts.voiceConfig[language].speed || 1,
-          "vol": 1,
+          "vol": this.opts.voiceConfig[language].vol || 1,
           "pitch": this.opts.voiceConfig[language].pitch || 0
       },
       "audio_setting":{
