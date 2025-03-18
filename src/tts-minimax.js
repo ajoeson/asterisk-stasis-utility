@@ -2,6 +2,7 @@ const axios = require("axios").default;
 const fx = require('fs-extra');
 const sha256 = require('./utils/sha256.js');
 const path = require('path');
+const { execFileSync } = require('child_process');
 
 class TtsMinimax {
   constructor(opts) {
@@ -22,12 +23,13 @@ class TtsMinimax {
     const textHash = sha256(text);
     const cacheFolder = path.join(process.cwd(), 'tts', ttsNodeId);
     fx.ensureDirSync(cacheFolder);
-    const cacheFilepath = path.join(process.cwd(), 'tts', ttsNodeId, textHash + '.' + "mp3");
+    const cacheFilepath = path.join(process.cwd(), 'tts', ttsNodeId, textHash + '.' + "wav");
+    const mp3CacheFilepath = path.join(process.cwd(), 'tts', ttsNodeId, textHash + '.' + "mp3");
     if (fx.existsSync(cacheFilepath)) {
       return {
-        path: `/aststasisutil/tts/${ttsNodeId}/${textHash}.${ "mp3"}`,
+        path: `/aststasisutil/tts/${ttsNodeId}/${textHash}.${ "wav"}`,
         filename: textHash + '.wav',
-        filePath: path.join(process.cwd(), 'tts', ttsNodeId, textHash + '.' + "mp3"),
+        filePath: path.join(process.cwd(), 'tts', ttsNodeId, textHash + '.' + "wav"),
         filePathWoExt: path.join(process.cwd(), 'tts', ttsNodeId, textHash),
       };
     }
@@ -57,12 +59,13 @@ class TtsMinimax {
       },
     });
 
-    fx.writeFileSync(cacheFilepath, Buffer.from(audio, 'hex'));
+    fx.writeFileSync(mp3CacheFilepath, Buffer.from(audio, 'hex'));
+    execFileSync('/usr/bin/sox', mp3CacheFilepath, cacheFilepath);
 
     return {
-      path: `/aststasisutil/tts/${ttsNodeId}/${textHash}.${ "mp3"}`,
-      filename: textHash + '.mp3',
-      filePath: path.join(process.cwd(), 'tts', ttsNodeId, textHash + '.' +  "mp3"),
+      path: `/aststasisutil/tts/${ttsNodeId}/${textHash}.${ "wav"}`,
+      filename: textHash + '.wav',
+      filePath: path.join(process.cwd(), 'tts', ttsNodeId, textHash + '.' +  "wav"),
       filePathWoExt: path.join(process.cwd(), 'tts', ttsNodeId, textHash),
     };
   }
