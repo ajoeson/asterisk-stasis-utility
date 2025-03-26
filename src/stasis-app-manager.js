@@ -210,9 +210,13 @@ class StasisAppManager extends EventEmitter {
                 error: err.message
               })
             }
-            this.localStore[channelId].__playbackId = playback.id;
+            
+            playback.once('PlaybackStarted', (event, instance) => {
+              this.localStore[channelId].__playbackId = playback.id;
+              this.opts.logger.info('      --> TTS playback started. ', this.localStore[channelId].__playbackId);
+            });
             playback.once('PlaybackFinished', (event, instance) => {
-              this.localStore[channelId].__playbackId = null;
+              // this.localStore[channelId].__playbackId = null;
               resolve({
                 completed: true
               });

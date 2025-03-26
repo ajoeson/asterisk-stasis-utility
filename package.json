@@ -1,6 +1,6 @@
 {
   "name": "asterisk-stasis-utility",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "This is a utility library for building stasis app for Asterisk 18,",
   "main": "index.js",
   "repository": "https://github.com/ajoeson/asterisk-stasis-utility.git",
