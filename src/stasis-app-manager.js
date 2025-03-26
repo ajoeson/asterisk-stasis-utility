@@ -171,12 +171,12 @@ class StasisAppManager extends EventEmitter {
       this.setLocalVariable(channelId, 'currentTtsNodeId', ttsNodeId);
     }
     try {
-      await this.ivr_stopPlayback(channelId);
       const language = languageOverride || this.getLocalVariable(channelId, 'language') || this.opts.callDefaultLanguage;
       const textContent = mulngtexts ? (mulngtexts[language] || text) : text;
       const ttsCacheObject = this.ttsEngine === 'Azure' ?
        await this.ttsAzure.getTtsFile({ language, ttsNodeId, text: textContent }) : 
        await this.ttsMinimax.getTtsFile({ language, ttsNodeId, text: textContent });
+      await this.ivr_stopPlayback(channelId);
       await new Promise((resolve) => {
         let url = `sound:${this.opts.fastifyPublicDomain}${ttsCacheObject.path}`;
         if (isLocal) {
