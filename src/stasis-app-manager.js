@@ -190,7 +190,7 @@ class StasisAppManager extends EventEmitter {
       if (playbackInterrupt) {
         await this.ivr_stopPlayback(channelId);
       } else {
-        logger.warn('      --> No playback interrupt flag enabled.');
+        this.opts.logger.warn('      --> No playback interrupt flag enabled.');
       }
       
       await new Promise((resolve) => {
