@@ -159,7 +159,7 @@ class StasisAppManager extends EventEmitter {
       });
     }
   }
-  async ivr_speakText(channelId, { languageOverride, text, mulngtexts, ttsNodeId, setNodeId, checkNodeId, isLocal = false, state }) {
+  async ivr_speakText(channelId, { languageOverride, text, mulngtexts, ttsNodeId, setNodeId, checkNodeId, isLocal = false, isIntResp = false, playbackInterrupt = true, state }) {
     if (checkNodeId) {
       const nid = this.getLocalVariable(channelId, 'currentTtsNodeId');
       if (nid !== ttsNodeId) {
@@ -177,12 +177,22 @@ class StasisAppManager extends EventEmitter {
        await this.ttsAzure.getTtsFile({ language, ttsNodeId, text: textContent }) : 
        await this.ttsMinimax.getTtsFile({ language, ttsNodeId, text: textContent });
 
-      if (state && state.realAnswerStarted) {
+      if (isIntResp && state && state.realAnswerStarted) {
         this.opts.logger.warn('        --> Inside ivr_speakText state.realAnswerStarted is true. Skip the intemediate response playback.');
         return;
       }
+
+      if (!isIntResp && state && !state.realAnswerStarted) {
+        state.realAnswerStarted = true;
+        logger.info('      --> state.realAnswerStarted set to true now because the final answer is generated. No need to play intermediate response.');
+      }
       
-      await this.ivr_stopPlayback(channelId);
+      if (playbackInterrupt) {
+        await this.ivr_stopPlayback(channelId);
+      } else {
+        logger.warn('      --> No playback interrupt flag enabled.');
+      }
+      
       await new Promise((resolve) => {
         let url = `sound:${this.opts.fastifyPublicDomain}${ttsCacheObject.path}`;
         if (isLocal) {
