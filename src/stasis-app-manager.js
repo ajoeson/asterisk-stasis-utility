@@ -184,7 +184,7 @@ class StasisAppManager extends EventEmitter {
 
       if (!isIntResp && state && !state.realAnswerStarted) {
         state.realAnswerStarted = true;
-        logger.info('      --> state.realAnswerStarted set to true now because the final answer is generated. No need to play intermediate response.');
+        this.opts.logger.info('      --> state.realAnswerStarted set to true now because the final answer is generated. No need to play intermediate response.');
       }
       
       if (playbackInterrupt) {
