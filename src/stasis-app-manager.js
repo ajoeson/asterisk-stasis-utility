@@ -178,6 +178,7 @@ class StasisAppManager extends EventEmitter {
        await this.ttsMinimax.getTtsFile({ language, ttsNodeId, text: textContent });
 
       if (state && state.realAnswerStarted) {
+        logger.warn('        --> Inside ivr_speakText state.realAnswerStarted is true. Skip the intemediate response playback.');
         return;
       }
       
