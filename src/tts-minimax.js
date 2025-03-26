@@ -61,6 +61,7 @@ class TtsMinimax {
 
     fx.writeFileSync(mp3CacheFilepath, Buffer.from(audio, 'hex'));
     execFileSync('/usr/bin/sox', [mp3CacheFilepath, cacheFilepath]);
+    fx.unlinkSync(mp3CacheFilepath);
 
     return {
       path: `/aststasisutil/tts/${ttsNodeId}/${textHash}.${ "wav"}`,
