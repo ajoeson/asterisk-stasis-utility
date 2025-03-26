@@ -26,6 +26,7 @@ class TtsMinimax {
     const cacheFilepath = path.join(process.cwd(), 'tts', ttsNodeId, textHash + '.' + "wav");
     const mp3CacheFilepath = path.join(process.cwd(), 'tts', ttsNodeId, textHash + '.' + "mp3");
     if (fx.existsSync(cacheFilepath)) {
+      this.opts.logger.info('   TTS --> Cache hit.');
       return {
         path: `/aststasisutil/tts/${ttsNodeId}/${textHash}.${ "wav"}`,
         filename: textHash + '.wav',
@@ -33,7 +34,7 @@ class TtsMinimax {
         filePathWoExt: path.join(process.cwd(), 'tts', ttsNodeId, textHash),
       };
     }
-
+    const timeStart = Date.now();
     const { data: { data: { audio } } } = await axios.post('https://api.minimaxi.chat/v1/t2a_v2?GroupId=' + this.opts.groupId, {
       "model": "speech-01-turbo",
       "text": text,
@@ -62,7 +63,7 @@ class TtsMinimax {
     fx.writeFileSync(mp3CacheFilepath, Buffer.from(audio, 'hex'));
     execFileSync('/usr/bin/sox', [mp3CacheFilepath, cacheFilepath]);
     fx.unlinkSync(mp3CacheFilepath);
-
+    this.opts.logger.warn('   TTS --> Cache miss. Generation time', (Date.now () - timeStart), 'ms');
     return {
       path: `/aststasisutil/tts/${ttsNodeId}/${textHash}.${ "wav"}`,
       filename: textHash + '.wav',
