@@ -159,7 +159,7 @@ class StasisAppManager extends EventEmitter {
       });
     }
   }
-  async ivr_speakText(channelId, { languageOverride, text, mulngtexts, ttsNodeId, setNodeId, checkNodeId, isLocal = false }) {
+  async ivr_speakText(channelId, { languageOverride, text, mulngtexts, ttsNodeId, setNodeId, checkNodeId, isLocal = false, state }) {
     if (checkNodeId) {
       const nid = this.getLocalVariable(channelId, 'currentTtsNodeId');
       if (nid !== ttsNodeId) {
@@ -176,6 +176,11 @@ class StasisAppManager extends EventEmitter {
       const ttsCacheObject = this.ttsEngine === 'Azure' ?
        await this.ttsAzure.getTtsFile({ language, ttsNodeId, text: textContent }) : 
        await this.ttsMinimax.getTtsFile({ language, ttsNodeId, text: textContent });
+
+      if (state && state.realAnswerStarted) {
+        return;
+      }
+      
       await this.ivr_stopPlayback(channelId);
       await new Promise((resolve) => {
         let url = `sound:${this.opts.fastifyPublicDomain}${ttsCacheObject.path}`;
