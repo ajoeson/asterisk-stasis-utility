@@ -36,7 +36,7 @@ class TtsMinimax {
     }
     const timeStart = Date.now();
     const { data: { data: { audio } } } = await axios.post('https://api.minimaxi.chat/v1/t2a_v2?GroupId=' + this.opts.groupId, {
-      "model": "speech-01-turbo",
+      "model": this.opts.voiceConfig[language].model || "speech-01-turbo",
       "text": text,
       "stream": false,
       "subtitle_enable": false,
