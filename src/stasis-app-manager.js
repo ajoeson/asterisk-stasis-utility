@@ -155,6 +155,7 @@ class StasisAppManager extends EventEmitter {
   async ivr_stopPlayback(channelId) {
     if (this.localStore[channelId].__playbackId) {
       await this.ari.playbacks.stop({ playbackId: this.localStore[channelId].__playbackId }).catch(ex => {
+        this.localStore[channelId].__playbackId = null;
         this.opts.logger.error('      > Cannot stop playback.', this.localStore[channelId].__playbackId, ex.message);
       });
     }
